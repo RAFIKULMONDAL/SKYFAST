@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// ── Hook ─────────────────────────────────────────
 export function useNotifications() {
   const [permission, setPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
@@ -41,7 +40,6 @@ export function useNotifications() {
   return { permission, enabled, requestPermission, disable, sendNotification };
 }
 
-// ── Alert builder ────────────────────────────────
 export function checkAndSendAlerts(weather, airQuality, sendNotification, locationName) {
   if (!weather) return [];
   const cur    = weather.current;
@@ -49,71 +47,26 @@ export function checkAndSendAlerts(weather, airQuality, sendNotification, locati
   const now    = new Date();
   const alerts = [];
 
-  // Rain in next 2 hours
   let rainSoon = false;
   for (let i = 0; i < hourly.time.length && !rainSoon; i++) {
     const diffH = (new Date(hourly.time[i]) - now) / 3600000;
     if (diffH >= 0 && diffH <= 2 && (hourly.precipitation_probability?.[i] ?? 0) > 60) {
       rainSoon = true;
-      alerts.push({
-        title: `🌧 Rain Alert — ${locationName}`,
-        body:  `Rain expected within 2 hours (${hourly.precipitation_probability[i]}% chance). Carry an umbrella!`,
-        icon:  '🌧',
-      });
+      alerts.push({ title: `🌧 Rain Alert — ${locationName}`, body: `Rain expected within 2 hours (${hourly.precipitation_probability[i]}% chance).`, icon: '🌧' });
     }
   }
-
-  // High UV
   const uv = hourly.uv_index?.[0] ?? 0;
-  if (uv >= 6) {
-    alerts.push({
-      title: `☀️ High UV — ${locationName}`,
-      body:  `UV Index is ${Math.round(uv * 10) / 10}. Apply SPF 30+ and wear sunglasses.`,
-      icon:  '☀️',
-    });
-  }
-
-  // Extreme temp
-  if (cur.temperature_2m >= 38) {
-    alerts.push({
-      title: `🌡️ Heat Alert — ${locationName}`,
-      body:  `${Math.round(cur.temperature_2m)}°C — stay hydrated and avoid prolonged sun.`,
-      icon:  '🌡️',
-    });
-  } else if (cur.temperature_2m <= 2) {
-    alerts.push({
-      title: `🥶 Cold Alert — ${locationName}`,
-      body:  `${Math.round(cur.temperature_2m)}°C — bundle up, frostbite risk on exposed skin.`,
-      icon:  '🥶',
-    });
-  }
-
-  // Thunderstorm active
-  if ([95, 96, 99].includes(cur.weather_code)) {
-    alerts.push({
-      title: `⛈️ Thunderstorm — ${locationName}`,
-      body:  'Active thunderstorm. Stay indoors and away from open areas.',
-      icon:  '⛈️',
-    });
-  }
-
-  // Poor AQI
+  if (uv >= 6) alerts.push({ title: `☀️ High UV — ${locationName}`, body: `UV Index is ${Math.round(uv * 10) / 10}. Apply SPF 30+.`, icon: '☀️' });
+  if (cur.temperature_2m >= 38) alerts.push({ title: `🌡️ Heat Alert — ${locationName}`, body: `${Math.round(cur.temperature_2m)}°C — stay hydrated.`, icon: '🌡️' });
+  else if (cur.temperature_2m <= 2) alerts.push({ title: `🥶 Cold Alert — ${locationName}`, body: `${Math.round(cur.temperature_2m)}°C — bundle up.`, icon: '🥶' });
+  if ([95, 96, 99].includes(cur.weather_code)) alerts.push({ title: `⛈️ Thunderstorm — ${locationName}`, body: 'Active thunderstorm. Stay indoors.', icon: '⛈️' });
   const aqi = airQuality?.current?.european_aqi ?? 0;
-  if (aqi > 80) {
-    alerts.push({
-      title: `🌬️ Poor Air Quality — ${locationName}`,
-      body:  `AQI is ${aqi}. Limit outdoor activity.`,
-      icon:  '🌬️',
-    });
-  }
+  if (aqi > 80) alerts.push({ title: `🌬️ Poor Air — ${locationName}`, body: `AQI is ${aqi}. Limit outdoor activity.`, icon: '🌬️' });
 
-  if (alerts.length > 0) {
-    sendNotification(alerts[0].title, alerts[0].body, alerts[0].icon);
-  }
+  if (alerts.length > 0) sendNotification(alerts[0].title, alerts[0].body, alerts[0].icon);
   return alerts;
 }
 
-// ── UI Component ─────────────────────────────────
 export default function NotificationPanel({ weather, airQuality, location, dark }) {
   const { permission, enabled, requestPermission, disable, sendNotification } = useNotifications();
   const [alerts, setAlerts] = useState([]);
@@ -128,7 +81,7 @@ export default function NotificationPanel({ weather, airQuality, location, dark 
     if (!weather || !enabled) return;
     const found = checkAndSendAlerts(weather, airQuality, sendNotification, location?.name || '');
     setAlerts(found);
-  }, [weather?.current?.weather_code, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [weather?.current?.weather_code, enabled]); // eslint-disable-line
 
   const handleToggle = async () => {
     if (enabled) { disable(); setAlerts([]); return; }
@@ -140,22 +93,16 @@ export default function NotificationPanel({ weather, airQuality, location, dark 
   };
 
   const handleTest = () => {
-    sendNotification(
-      `⛅ SkyCast — ${location?.name || ''}`,
-      'Weather alerts are working correctly!',
-      '⛅'
-    );
+    sendNotification(`⛅ SkyCast — ${location?.name || ''}`, 'Weather alerts are working!', '⛅');
   };
 
   const bellCls = enabled
     ? 'border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-black'
-    : dark
-      ? 'border-ink-600 text-ink-300 hover:border-amber-500 hover:text-amber-400'
-      : 'border-gray-300 text-gray-500 hover:text-amber-600';
+    : dark ? 'border-ink-600 text-ink-300 hover:border-amber-500 hover:text-amber-400'
+           : 'border-gray-300 text-gray-500 hover:text-amber-600';
 
   return (
     <div className="relative">
-      {/* Bell button */}
       <button
         onClick={() => setOpen(o => !o)}
         className={`relative px-2.5 sm:px-3 py-2 rounded-full text-xs font-semibold border transition-colors ${bellCls}`}
@@ -166,17 +113,41 @@ export default function NotificationPanel({ weather, airQuality, location, dark 
             {alerts.length}
           </span>
         )}
-        <span className="hidden sm:inline ml-1">
-          {enabled ? 'Alerts On' : 'Alerts'}
-        </span>
+        <span className="hidden sm:inline ml-1">{enabled ? 'Alerts On' : 'Alerts'}</span>
       </button>
 
-      {/* Backdrop */}
       {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
 
-      {/* Dropdown */}
       {open && (
-        <div className={`absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border shadow-xl z-50 overflow-hidden notif-dropdown ${card}`}>
+        <div
+          className={`fixed sm:absolute z-50 rounded-2xl border shadow-xl overflow-hidden ${card}`}
+          style={{
+            /* Mobile: centered fixed panel */
+            top: 'var(--notif-top, auto)',
+            /* Position calculation handled by inline style below */
+            width: 'min(320px, calc(100vw - 24px))',
+            maxHeight: 'calc(100vh - 80px)',
+            overflowY: 'auto',
+            /* On mobile fix to center, on desktop anchor to button */
+            right: 0,
+            ...(typeof window !== 'undefined' && window.innerWidth < 640
+              ? {
+                  position: 'fixed',
+                  top: '70px',
+                  left: '50%',
+                  right: 'auto',
+                  transform: 'translateX(-50%)',
+                }
+              : {
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  left: 'auto',
+                  transform: 'none',
+                }
+            ),
+          }}
+        >
           <div className="p-4">
             <div className="text-[10px] uppercase tracking-widest font-semibold text-amber-500 mb-3">
               Weather Alerts
@@ -188,16 +159,11 @@ export default function NotificationPanel({ weather, airQuality, location, dark 
               </div>
             ) : (
               <div className="flex items-center justify-between mb-3">
-                <span className={`text-xs ${txt2}`}>
-                  {enabled ? '✅ Alerts are active' : 'Get weather alerts'}
-                </span>
-                <button
-                  onClick={handleToggle}
+                <span className={`text-xs ${txt2}`}>{enabled ? '✅ Alerts active' : 'Get weather alerts'}</span>
+                <button onClick={handleToggle}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors
-                    ${enabled
-                      ? 'bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30'
-                      : 'bg-amber-500 text-black hover:bg-amber-400'}`}
-                >
+                    ${enabled ? 'bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30'
+                              : 'bg-amber-500 text-black hover:bg-amber-400'}`}>
                   {enabled ? 'Disable' : 'Enable'}
                 </button>
               </div>
@@ -205,22 +171,13 @@ export default function NotificationPanel({ weather, airQuality, location, dark 
 
             <div className={`rounded-xl p-3 mb-3 ${card2}`}>
               <div className={`text-[10px] uppercase tracking-widest ${txt3} mb-2`}>Alerts for:</div>
-              {[
-                '🌧 Rain in 2 hours (>60%)',
-                '☀️ High UV index (≥6)',
-                '🌡️ Extreme temperatures',
-                '⛈️ Thunderstorm active',
-                '🌬️ Poor AQI (>80)',
-              ].map(a => (
-                <div key={a} className={`text-xs py-0.5 ${txt2}`}>{a}</div>
-              ))}
+              {['🌧 Rain in 2 hours (>60%)', '☀️ High UV index (≥6)', '🌡️ Extreme temperatures', '⛈️ Thunderstorm active', '🌬️ Poor AQI (>80)']
+                .map(a => <div key={a} className={`text-xs py-0.5 ${txt2}`}>{a}</div>)}
             </div>
 
             {alerts.length > 0 && (
               <div className="mb-3">
-                <div className={`text-[10px] uppercase tracking-widest ${txt3} mb-2`}>
-                  Active ({alerts.length})
-                </div>
+                <div className={`text-[10px] uppercase tracking-widest ${txt3} mb-2`}>Active ({alerts.length})</div>
                 {alerts.map((a, i) => (
                   <div key={i} className="rounded-xl p-2.5 mb-1.5 border border-orange-500/30 bg-orange-500/10">
                     <div className="text-xs font-semibold text-orange-400">{a.title}</div>
@@ -231,13 +188,9 @@ export default function NotificationPanel({ weather, airQuality, location, dark 
             )}
 
             {enabled && permission === 'granted' && (
-              <button
-                onClick={handleTest}
+              <button onClick={handleTest}
                 className={`w-full py-2 rounded-xl text-xs border transition-colors
-                  ${dark
-                    ? 'border-ink-600 text-ink-300 hover:border-amber-500'
-                    : 'border-gray-200 text-gray-500 hover:border-amber-400'}`}
-              >
+                  ${dark ? 'border-ink-600 text-ink-300 hover:border-amber-500' : 'border-gray-200 text-gray-500 hover:border-amber-400'}`}>
                 📬 Send Test Notification
               </button>
             )}

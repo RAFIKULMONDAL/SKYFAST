@@ -64,6 +64,7 @@ export default function WeatherMap({ lat, lon, dark, onLocationSelect }) {
   return (
     <div
       ref={containerRef}
+      data-noswipe="true"
       className={dark ? 'leaflet-container map-dark' : 'leaflet-container map-light'}
       style={{ width: '100%', height: '300px', zIndex: 1 }}
     />
