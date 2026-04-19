@@ -21,15 +21,20 @@ export default function HourlyForecast({ weather, unit, dark }) {
       <div className="text-[10px] uppercase tracking-widest font-semibold text-amber-500 mb-4">
         ⏱ Hourly Forecast
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: 'thin', scrollbarColor: '#333 transparent' }}>
+
+      {/* data-noswipe tells useSwipeGesture to ignore touches starting here */}
+      <div
+        data-noswipe="true"
+        className="flex gap-2 overflow-x-auto pb-1"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#333 transparent', WebkitOverflowScrolling: 'touch' }}
+      >
         {items.slice(0, 24).map((idx, pos) => (
-          <div key={idx}
+          <div
+            key={idx}
             className={`flex-shrink-0 rounded-xl p-2.5 text-center w-[66px] sm:w-[72px] border transition-colors
               ${pos === 0
                 ? 'border-amber-500 bg-amber-500/10'
-                : `border-transparent ${card2}`
-              }`}
+                : `border-transparent ${card2}`}`}
           >
             <div className={`text-[10px] mb-1.5 ${txt3}`}>
               {pos === 0 ? 'Now' : fmtHour(hourly.time[idx])}

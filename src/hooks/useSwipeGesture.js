@@ -1,50 +1,70 @@
 import { useRef, useCallback } from 'react';
 
-export default function useSwipeGesture(onSwipeLeft, onSwipeRight, threshold = 60) {
-  const startX   = useRef(null);
-  const startY   = useRef(null);
-  const active   = useRef(false);
-  const blocked  = useRef(false);
+// Returns true if the element or any ancestor is horizontally scrollable
+// with actual overflow content (like the hourly forecast scroll strip)
+function isInsideHorizontalScroller(target) {
+  let el = target;
+  while (el && el !== document.body) {
+    // Check for data-noswipe attribute (maps etc.)
+    if (el.getAttribute?.('data-noswipe') === 'true') return true;
+
+    // Check for leaflet containers
+    if (
+      el.classList?.contains('leaflet-container') ||
+      el.classList?.contains('leaflet-pane') ||
+      el.classList?.contains('map-dark') ||
+      el.classList?.contains('map-light')
+    ) return true;
+
+    // Check if this element is horizontally scrollable with overflow content
+    // scrollWidth > clientWidth means it has horizontal scroll content
+    if (el.scrollWidth > el.clientWidth + 2) {
+      const style = window.getComputedStyle(el);
+      const overflowX = style.overflowX;
+      if (overflowX === 'auto' || overflowX === 'scroll') {
+        return true;
+      }
+    }
+
+    el = el.parentElement;
+  }
+  return false;
+}
+
+export default function useSwipeGesture(onSwipeLeft, onSwipeRight, threshold = 70) {
+  const startX  = useRef(null);
+  const startY  = useRef(null);
+  const active  = useRef(false);
+  const blocked = useRef(false);
 
   const onTouchStart = useCallback((e) => {
-    // Block swipe if touch starts on an interactive or scrollable element
     const target = e.target;
-    const blocked_tags = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'A'];
 
-    // Check tag name
-    if (blocked_tags.includes(target.tagName)) {
+    // Block on interactive elements
+    const BLOCKED_TAGS = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'A', 'RANGE'];
+    if (BLOCKED_TAGS.includes(target.tagName)) {
       blocked.current = true;
       return;
     }
 
-    // Check if inside a leaflet map container (has .leaflet-container ancestor)
-    let el = target;
-    while (el) {
-      if (
-        el.classList?.contains('leaflet-container') ||
-        el.classList?.contains('leaflet-pane') ||
-        el.classList?.contains('map-dark') ||
-        el.classList?.contains('map-light') ||
-        el.getAttribute?.('data-noswipe') === 'true'
-      ) {
-        blocked.current = true;
-        return;
-      }
-      el = el.parentElement;
+    // Block if inside any horizontal scroller or map
+    if (isInsideHorizontalScroller(target)) {
+      blocked.current = true;
+      return;
     }
 
-    blocked.current  = false;
-    active.current   = true;
-    startX.current   = e.touches[0].clientX;
-    startY.current   = e.touches[0].clientY;
+    blocked.current = false;
+    active.current  = true;
+    startX.current  = e.touches[0].clientX;
+    startY.current  = e.touches[0].clientY;
   }, []);
 
   const onTouchMove = useCallback((e) => {
     if (!active.current || blocked.current || startX.current == null) return;
-    const dx = e.touches[0].clientX - startX.current;
-    const dy = e.touches[0].clientY - startY.current;
-    // If mostly vertical — it's a scroll, cancel swipe
-    if (Math.abs(dy) > Math.abs(dx) * 1.2) {
+    const dx = Math.abs(e.touches[0].clientX - startX.current);
+    const dy = Math.abs(e.touches[0].clientY - startY.current);
+    // Cancel if user is scrolling vertically
+    if (dy > dx * 1.1) {
       active.current = false;
     }
   }, []);
@@ -53,6 +73,7 @@ export default function useSwipeGesture(onSwipeLeft, onSwipeRight, threshold = 6
     if (!active.current || blocked.current || startX.current == null) {
       active.current  = false;
       blocked.current = false;
+      startX.current  = null;
       return;
     }
     active.current = false;
@@ -60,8 +81,8 @@ export default function useSwipeGesture(onSwipeLeft, onSwipeRight, threshold = 6
     const dx = e.changedTouches[0].clientX - startX.current;
     const dy = e.changedTouches[0].clientY - startY.current;
 
-    // Only fire if clearly horizontal and long enough
-    if (Math.abs(dx) < threshold || Math.abs(dy) > Math.abs(dx) * 0.8) {
+    // Must be long enough and clearly more horizontal than vertical
+    if (Math.abs(dx) < threshold || Math.abs(dy) > Math.abs(dx) * 0.7) {
       startX.current = null;
       return;
     }
