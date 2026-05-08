@@ -13,9 +13,7 @@
 //  8. Click "Google" provider → Enable → Save
 //  9. Add your domain to Authorized domains
 //     (for localhost: already added by default)
-//
-//  That's it! Google login will work.
-// ─────────────────────────────────────────────────────────────
+
 
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
