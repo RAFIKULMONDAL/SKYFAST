@@ -9,7 +9,7 @@ export default function LiveClock({ weather, dark }) {
   useEffect(() => {
     if (!weather?.timezone) return;
 
-    const tz = weather.timezone; // e.g. "Asia/Kolkata"
+    const tz = weather.timezone; 
 
     const tick = () => {
       try {
@@ -43,7 +43,7 @@ export default function LiveClock({ weather, dark }) {
 
   if (!time) return null;
 
-  // Get UTC offset label
+  
   const getOffset = () => {
     try {
       const tz = weather?.timezone;

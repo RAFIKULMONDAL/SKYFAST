@@ -67,7 +67,7 @@ export default function DailySummary({ weather, unit, dark }) {
   const toUnit = (v) => unit === 'C' ? `${Math.round(v)}°C` : `${Math.round(v * 9/5 + 32)}°F`;
   const toWind = (v) => unit === 'C' ? `${Math.round(v)} km/h` : `${Math.round(v * 0.621)} mph`;
 
-  // Build a natural language sentence
+ 
   const summary = `${mood.advice} High of ${toUnit(maxT)}, low of ${toUnit(minT)}.`
     + (maxRain > 40 ? ` ${maxRain}% chance of rain.` : '')
     + (windMax > 30 ? ` Winds up to ${toWind(windMax)}.` : '');
@@ -87,7 +87,7 @@ export default function DailySummary({ weather, unit, dark }) {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {/* Best outdoor hour */}
+        
         <div className={`rounded-xl p-3 col-span-2 sm:col-span-1 ${card2}`}>
           <div className={`text-[10px] uppercase tracking-widest font-semibold ${txt3} mb-1`}>
             🌿 Best Hour Outside

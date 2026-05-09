@@ -22,7 +22,7 @@ export default function HourlyForecast({ weather, unit, dark }) {
         ⏱ Hourly Forecast
       </div>
 
-      {/* data-noswipe tells useSwipeGesture to ignore touches starting here */}
+      
       <div
         data-noswipe="true"
         className="flex gap-2 overflow-x-auto pb-1"
